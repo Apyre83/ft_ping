@@ -77,8 +77,8 @@ void receive_and_print_packet(struct packet *pkt, struct sockaddr_in *r_addr, st
     struct msghdr msg;
     struct iovec iov[1];
 
-    memset(&msg, 0, sizeof(msg));
-    memset(&iov, 0, sizeof(iov));
+    ft_memset(&msg, 0, sizeof(msg));
+    ft_memset(&iov, 0, sizeof(iov));
 
     iov[0].iov_base = recv_buffer;
     iov[0].iov_len = sizeof(recv_buffer);

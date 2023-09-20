@@ -28,6 +28,30 @@ void	*ft_memcpy(void *dest, const void *src, size_t n)
 }
 
 
+void	*ft_memset(void *s, int c, size_t n)
+{
+	int	i;
+
+	i = 0;
+	while ((size_t)i < n)
+		((char *) s)[i++] = c;
+	return (s);
+}
+
+// Ft_strcmp
+int	ft_strcmp(const char *s1, const char *s2)
+{
+	size_t	i;
+
+	i = 0;
+	while (((unsigned char *) s1)[i] && ((unsigned char *) s2)[i]
+		&& ((unsigned char *) s1)[i] == ((unsigned char *) s2)[i])
+		i++;
+	return (((unsigned char *) s1)[i] - ((unsigned char *) s2)[i]);
+}
+
+
+
 double fabs(double x) {
     if (x < 0) {
         return -x;

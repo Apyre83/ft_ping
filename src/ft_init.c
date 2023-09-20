@@ -22,7 +22,7 @@ void setup_socket() {
  * @param pkt The packet to populate
  */
 void prepare_packet(struct packet *pkt) {
-    memset(pkt, 0, sizeof(struct packet));
+    ft_memset(pkt, 0, sizeof(struct packet));
     pkt->header.type = ICMP_ECHO;
     pkt->header.un.echo.id = getpid() & 0xFFFF;
 }
@@ -36,7 +36,7 @@ void prepare_packet(struct packet *pkt) {
  */
 void resolve_dns(const char *hostname, struct sockaddr_in *dest) {
     struct addrinfo hints, *res;
-    memset(&hints, 0, sizeof(hints));
+    ft_memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
 
     int error = getaddrinfo(hostname, NULL, &hints, &res);

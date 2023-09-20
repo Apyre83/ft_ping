@@ -54,6 +54,8 @@ void			receive_and_print_packet(struct packet *pkt, struct sockaddr_in *r_addr, 
 
 /* Utils */
 void			*ft_memcpy(void *dest, const void *src, size_t n);
+void			*ft_memset(void *s, int c, size_t n);
+int				ft_strcmp(const char *s1, const char *s2);
 void			exit_with_gai_error(const char *msg, int error_code);
 void			exit_with_error(const char *msg);
 unsigned short	calculate_checksum(void *buf, int length);
@@ -61,15 +63,15 @@ double			sqrt(double x);
 
 /* Inits */
 void			resolve_dns(const char *hostname, struct sockaddr_in *dest);
-void			setup_socket();
+void			setup_socket(void);
 void			prepare_packet(struct packet *pkt);
 
 /* Print */
-void	print_start_message(const char *hostname, struct sockaddr_in *dest, struct options *opts);
-void	print_statistics(void);
+void			print_start_message(const char *hostname, struct sockaddr_in *dest, struct options *opts);
+void			print_statistics(void);
 
 /* Parsing */
-void	parse_options(int argc, char *argv[], struct options *opts);
+void			parse_options(int argc, char *argv[], struct options *opts);
 
 
 
