@@ -34,8 +34,8 @@ struct packet {
 struct info {
 	int				sockfd;
 	unsigned int	transmitted, received;
-	double			min_time, max_time, total_time;
-	double			total_time_squared;
+	double			min_time, max_time, total_time, total_time_squared;
+	char			*hostname;
 };
 
 struct options {
@@ -69,7 +69,7 @@ void	print_start_message(const char *hostname, struct sockaddr_in *dest, struct 
 void	print_statistics(void);
 
 /* Parsing */
-void	parse_options(int argc, char *argv[], struct options *opts, char **hostname);
+void	parse_options(int argc, char *argv[], struct options *opts);
 
 
 

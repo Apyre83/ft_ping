@@ -1,7 +1,7 @@
 
 #include "ft_ping.h"
 
-void	parse_options(int argc, char *argv[], struct options *opts, char **hostname) {
+void	parse_options(int argc, char *argv[], struct options *opts) {
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s [options] <hostname>\nTry %s -? for more information ", argv[0], argv[0]);
 		exit(1);
@@ -25,7 +25,8 @@ void	parse_options(int argc, char *argv[], struct options *opts, char **hostname
 				fprintf(stderr, "For this project, only one hostname is allowed.\n");
 				exit(1);
 			}
-			*hostname = argv[i];
+			g_info.hostname = argv[i];
+			has_hostname = 1;
         }
     }
 }

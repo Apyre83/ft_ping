@@ -12,7 +12,7 @@ void	print_start_message(const char *hostname, struct sockaddr_in *dest, struct 
 }
 
 void	print_statistics(void) {
-    printf("\n--- ping statistics ---\n");
+    printf("\n--- %s statistics ---\n", g_info.hostname);
     printf("%u packets transmitted, %u packets received, %.1f%% packet loss\n",
            g_info.transmitted, g_info.received, 100.0 * (g_info.transmitted - g_info.received) / g_info.transmitted);
     if (g_info.received > 0) {

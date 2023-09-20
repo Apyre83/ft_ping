@@ -1,13 +1,12 @@
 #include "ft_ping.h"
 
 
-struct info g_info = {0, 0, 0, 1e6, 0, 0, 0};
+struct info g_info = {0, 0, 0, 1e6, 0, 0, 0, 0};
 
 
 int main(int argc, char *argv[]) {
 	struct options	opts = {0};
-	char		*hostname;
-	parse_options(argc, argv, &opts, &hostname);
+	parse_options(argc, argv, &opts);
 
     
     signal(SIGINT, handle_signal);
@@ -16,8 +15,8 @@ int main(int argc, char *argv[]) {
     struct packet pkt;
     struct timeval tv_send, tv_receive;
 
-    resolve_dns(hostname, &dest);
-	print_start_message(hostname, &dest, &opts);
+    resolve_dns(g_info.hostname, &dest);
+	print_start_message(g_info.hostname, &dest, &opts);
     setup_socket();
     prepare_packet(&pkt);
 
