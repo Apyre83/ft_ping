@@ -4,41 +4,20 @@
 struct info g_info = {0, 0, 0, 1e6, 0, 0, 0};
 
 
-void print_start_message(const char *hostname, struct sockaddr_in *dest) {
-    printf("PING %s (%s): 56 data bytes\n", hostname, inet_ntoa(dest->sin_addr));
-}
-
-void print_statistics() {
-    printf("\n--- ping statistics ---\n");
-    printf("%u packets transmitted, %u packets received, %.1f%% packet loss\n",
-           g_info.transmitted, g_info.received, 100.0 * (g_info.transmitted - g_info.received) / g_info.transmitted);
-    if (g_info.received > 0) {
-        double avg_time = g_info.total_time / g_info.received;
-        double stddev = sqrt((g_info.total_time_squared / g_info.received) - (avg_time * avg_time));
-
-        printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n",
-               g_info.min_time, avg_time, g_info.max_time, stddev);
-    }
-}
-
-
-
-
-
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        printf("Usage: %s <hostname>\n", argv[0]);
-        exit(1);
-    }
+	struct options	opts = {0};
+	char		*hostname;
+	parse_options(argc, argv, &opts, &hostname);
 
+    
     signal(SIGINT, handle_signal);
 
     struct sockaddr_in dest;
     struct packet pkt;
     struct timeval tv_send, tv_receive;
 
-    resolve_dns(argv[1], &dest);
-	print_start_message(argv[1], &dest);
+    resolve_dns(hostname, &dest);
+	print_start_message(hostname, &dest, &opts);
     setup_socket();
     prepare_packet(&pkt);
 

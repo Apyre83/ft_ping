@@ -26,8 +26,8 @@
 
 /* Structures */
 struct packet {
-    struct icmphdr header;
-    char payload[PACKET_SIZE - sizeof(struct icmphdr)];
+    struct icmphdr	header;
+    char			payload[PACKET_SIZE - sizeof(struct icmphdr)];
 };
 
 
@@ -36,6 +36,10 @@ struct info {
 	unsigned int	transmitted, received;
 	double			min_time, max_time, total_time;
 	double			total_time_squared;
+};
+
+struct options {
+	int	verbose;
 };
 
 
@@ -59,6 +63,13 @@ double			sqrt(double x);
 void			resolve_dns(const char *hostname, struct sockaddr_in *dest);
 void			setup_socket();
 void			prepare_packet(struct packet *pkt);
+
+/* Print */
+void	print_start_message(const char *hostname, struct sockaddr_in *dest, struct options *opts);
+void	print_statistics(void);
+
+/* Parsing */
+void	parse_options(int argc, char *argv[], struct options *opts, char **hostname);
 
 
 

@@ -1,9 +1,11 @@
 UP = "\033[A"
 CLEAR = "\033[K"
 
-MY_SOURCES =	src/ft_ping.c	\
-				src/ft_utils.c	\
-				src/ft_init.c
+MY_SOURCES =	src/ft_ping.c		\
+				src/ft_utils.c		\
+				src/ft_init.c		\
+				src/ft_parsing.c	\
+				src/ft_print.c
 
 MY_OBJECTS = $(MY_SOURCES:.c=.o)
 
