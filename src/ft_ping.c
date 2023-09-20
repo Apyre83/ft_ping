@@ -1,6 +1,29 @@
 #include "ft_ping.h"
 
 
+struct info g_info = {0, 0, 0, 1e6, 0, 0, 0};
+
+
+void print_start_message(const char *hostname, struct sockaddr_in *dest) {
+    printf("PING %s (%s): 56 data bytes\n", hostname, inet_ntoa(dest->sin_addr));
+}
+
+void print_statistics() {
+    printf("\n--- ping statistics ---\n");
+    printf("%u packets transmitted, %u packets received, %.1f%% packet loss\n",
+           g_info.transmitted, g_info.received, 100.0 * (g_info.transmitted - g_info.received) / g_info.transmitted);
+    if (g_info.received > 0) {
+        double avg_time = g_info.total_time / g_info.received;
+        double stddev = sqrt((g_info.total_time_squared / g_info.received) - (avg_time * avg_time));
+
+        printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n",
+               g_info.min_time, avg_time, g_info.max_time, stddev);
+    }
+}
+
+
+
+
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -15,42 +38,20 @@ int main(int argc, char *argv[]) {
     struct timeval tv_send, tv_receive;
 
     resolve_dns(argv[1], &dest);
+	print_start_message(argv[1], &dest);
     setup_socket();
     prepare_packet(&pkt);
 
     while (1) {
         send_packet(&pkt, &dest, &tv_send);
         receive_and_print_packet(&pkt, &dest, &tv_receive, &tv_send);
-		usleep(1000000);
+        usleep(1000000);
     }
 
-    close(sockfd);
+    close(g_info.sockfd);
     return 0;
 }
 
-/**
- * @brief Calculates ICMP checksum
- * @param buf The buffer containing the data to checksum
- * @param length The length of the data in the buffer
- * @return The computed checksum
- */
-unsigned short calculate_checksum(void *buf, int length) {
-    unsigned short *data = buf;
-    unsigned int sum = 0;
-
-    for (; length > 1; length -= 2) {
-        sum += *data++;
-    }
-
-    if (length == 1) {
-        sum += *(unsigned char*)data;
-    }
-
-    sum = (sum >> 16) + (sum & 0xFFFF);
-    sum += (sum >> 16);
-
-    return ~sum;
-}
 
 /**
  * @brief Handles SIGINT signal (Ctrl+C)
@@ -58,67 +59,12 @@ unsigned short calculate_checksum(void *buf, int length) {
  */
 void handle_signal(int signo) {
     if (signo == SIGINT) {
-        printf("\nExiting.\n");
-        close(sockfd);
+        print_statistics();
+		close(g_info.sockfd);
         exit(0);
     }
 }
 
-/**
- * @brief Receives and prints ICMP packet details
- * @param pkt The packet to populate with received data
- * @param r_addr The source address of received packet
- * @param tv_receive The timestamp when the packet is received
- * @param tv_send The timestamp when the packet was sent
- */
-void resolve_dns(const char *hostname, struct sockaddr_in *dest) {
-    struct addrinfo hints, *res;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-
-    if (getaddrinfo(hostname, NULL, &hints, &res) != 0) {
-        perror("getaddrinfo");
-        exit(1);
-    }
-
-    if (res == NULL) {
-        printf("Host not found.\n");
-        exit(1);
-    }
-
-    dest->sin_family = AF_INET;
-    dest->sin_port = 0;
-    dest->sin_addr = ((struct sockaddr_in*)res->ai_addr)->sin_addr;
-
-    freeaddrinfo(res);
-}
-
-/**
- * @brief Sets up the raw socket
- */
-void setup_socket() {
-    sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    if (sockfd < 0) {
-        perror("socket");
-        exit(1);
-    }
-
-    int ttl_val = 64;
-    if (setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl_val, sizeof(ttl_val)) != 0) {
-        perror("setsockopt");
-        exit(1);
-    }
-}
-
-/**
- * @brief Prepares the ICMP packet for sending
- * @param pkt The packet to populate
- */
-void prepare_packet(struct packet *pkt) {
-    memset(pkt, 0, sizeof(struct packet));
-    pkt->header.type = ICMP_ECHO;
-    pkt->header.un.echo.id = getpid() & 0xFFFF;
-}
 
 /**
  * @brief Sends an ICMP packet
@@ -133,10 +79,10 @@ void send_packet(struct packet *pkt, struct sockaddr_in *dest, struct timeval *t
 
     gettimeofday(tv_send, NULL);
 
-    if (sendto(sockfd, pkt, sizeof(struct packet), 0, (struct sockaddr*)dest, sizeof(struct sockaddr_in)) <= 0) {
-        perror("sendto");
-        exit(1);
+    if (sendto(g_info.sockfd, pkt, sizeof(struct packet), 0, (struct sockaddr*)dest, sizeof(struct sockaddr_in)) <= 0) {
+        exit_with_error("sendto");
     }
+	g_info.transmitted++;
 }
 
 /**
@@ -163,18 +109,23 @@ void receive_and_print_packet(struct packet *pkt, struct sockaddr_in *r_addr, st
     msg.msg_name = r_addr;
     msg.msg_namelen = len;
 
-    ssize_t bytes_received = recvmsg(sockfd, &msg, 0);
+    ssize_t bytes_received = recvmsg(g_info.sockfd, &msg, 0);
 
     if (bytes_received <= 0) {
-        perror("recvmsg");
-        return;
+        exit_with_error("recvmsg");
     }
 
     gettimeofday(tv_receive, NULL);
     struct ip *ip_header = (struct ip *)recv_buffer;
     int ttl = ip_header->ip_ttl;
 
+	g_info.received++;
     double rtt = ((tv_receive->tv_sec - tv_send->tv_sec) * 1000000 + (tv_receive->tv_usec - tv_send->tv_usec)) / 1000.0;
+	g_info.total_time += rtt;
+	if (rtt < g_info.min_time) g_info.min_time = rtt;
+	if (rtt > g_info.max_time) g_info.max_time = rtt;
+	g_info.total_time_squared += rtt * rtt;
+
 
     printf("%zd bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
            bytes_received - IP_HEADER_SIZE,
