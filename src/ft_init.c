@@ -13,9 +13,17 @@ void setup_socket() {
 
     int ttl_val = 64;
     if (setsockopt(g_info.sockfd, IPPROTO_IP, IP_TTL, &ttl_val, sizeof(ttl_val)) != 0) {
-        exit_with_error("setsockopt");
+        exit_with_error("setsockopt for TTL");
+    }
+
+    struct timeval tv;
+    tv.tv_sec = 1;  // Temps en secondes
+    tv.tv_usec = 0; // Temps en microsecondes
+    if (setsockopt(g_info.sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        exit_with_error("setsockopt for timeout");
     }
 }
+
 
 /**
  * @brief Prepares the ICMP packet for sending
@@ -52,6 +60,8 @@ void resolve_dns(const char *hostname, struct sockaddr_in *dest) {
     dest->sin_family = AF_INET;
     dest->sin_port = 0;
     dest->sin_addr = ((struct sockaddr_in*)res->ai_addr)->sin_addr;
+
+	g_info.dest = dest->sin_addr;
 
     freeaddrinfo(res);
 }

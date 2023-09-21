@@ -1,7 +1,7 @@
 #include "ft_ping.h"
 
 
-struct info g_info = {0, 0, 0, 1e6, 0, 0, 0, 0};
+struct info g_info = {0, 0, 0, 1e6, 0, 0, 0, 0, {0} };
 
 
 int main(int argc, char *argv[]) {
@@ -21,10 +21,21 @@ int main(int argc, char *argv[]) {
     prepare_packet(&pkt);
 
     while (1) {
-        send_packet(&pkt, &dest, &tv_send);
-        receive_and_print_packet(&pkt, &dest, &tv_receive, &tv_send);
-        usleep(1000000);
-    }
+		struct timeval loop_start, loop_end;
+		gettimeofday(&loop_start, NULL);
+
+		send_packet(&pkt, &dest, &tv_send);
+		receive_and_print_packet(&pkt, &dest, &tv_receive, &tv_send);
+
+		gettimeofday(&loop_end, NULL);
+		long elapsed_time_us = (loop_end.tv_sec - loop_start.tv_sec) * 1000000 + (loop_end.tv_usec - loop_start.tv_usec);
+		long remaining_time_us = 1000000 - elapsed_time_us;
+
+		if (remaining_time_us > 0) {
+			usleep(remaining_time_us);
+		}
+	}
+
 
     close(g_info.sockfd);
     return 0;
@@ -88,10 +99,17 @@ void receive_and_print_packet(struct packet *pkt, struct sockaddr_in *r_addr, st
     msg.msg_namelen = len;
 
     ssize_t bytes_received = recvmsg(g_info.sockfd, &msg, 0);
-
-    if (bytes_received <= 0) {
-        exit_with_error("recvmsg");
+	if (bytes_received < 0) {
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			return;
+		}
+		else {
+			exit_with_error("recvmsg");
+		}
     }
+	if (r_addr->sin_addr.s_addr != g_info.dest.s_addr) {
+		return;
+	}
 
     gettimeofday(tv_receive, NULL);
     struct ip *ip_header = (struct ip *)recv_buffer;

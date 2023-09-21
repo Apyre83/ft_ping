@@ -36,6 +36,7 @@ struct info {
 	unsigned int	transmitted, received;
 	double			min_time, max_time, total_time, total_time_squared;
 	char			*hostname;
+	struct in_addr	dest;
 };
 
 struct options {
